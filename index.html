@@ -11,6 +11,7 @@
       color: #333;
       text-align: center;
       padding: 2rem;
+      overflow: hidden;
     }
 
     h1 {
@@ -26,9 +27,11 @@
       border-radius: 20px;
       box-shadow: 4px 4px 0 #000;
       width: 300px;
+      position: relative;
+      z-index: 2;
     }
 
-    input, textarea, button {
+    input, textarea, select, button {
       width: 100%;
       font-family: 'Press Start 2P', cursive;
       font-size: 10px;
@@ -49,8 +52,27 @@
       background-color: #ff1493;
     }
 
-    .pixel-frame {
-      image-rendering: pixelated;
+    #msg {
+      margin-top: 1rem;
+      font-size: 12px;
+    }
+
+    .floating-img {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      animation: float 20s linear infinite;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) translateX(0);
+      }
+      100% {
+        transform: translateY(-120vh) translateX(50vw);
+      }
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
@@ -60,27 +82,71 @@
   <form id="grievance-form">
     <input type="text" name="name" placeholder="Your Name" required />
     <textarea name="grievance" placeholder="Type your grievance here..." rows="5" required></textarea>
+    <select name="mood" id="mood" required>
+      <option value="">How are you feeling today?</option>
+      <option value="sad">😢 Sad</option>
+      <option value="angry">😠 Angry</option>
+      <option value="happy">😊 Happy</option>
+      <option value="excited">🤩 Excited</option>
+      <option value="horny">🔥 Horny</option>
+    </select>
     <button type="submit">Submit</button>
   </form>
   <p id="msg"></p>
 
+  <!-- Floating images -->
+  <img src="images/you1.png" class="floating-img" style="left: 10vw; animation-delay: 0s;">
+  <img src="images/you2.png" class="floating-img" style="left: 40vw; animation-delay: 4s;">
+  <img src="images/you3.png" class="floating-img" style="left: 70vw; animation-delay: 8s;">
+
+  <!-- Mood Music -->
+  <audio id="moodMusic" autoplay loop></audio>
+
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyRzVgt-IE3YxygwuWfTffy2v1r5OSfJh24WBhB3pwfE7CzbCx4DcAq1SPk-t4Hx5SexA/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxWfwsmQP5UQWMZLPde81Npd49wlCnz_tLpEvOECv3scQAUoWSaelsWJYCxicEFx2vv/exec'; // ⛳ Replace this with your Apps Script URL
     const form = document.forms['grievance-form'];
     const msg = document.getElementById("msg");
+    const moodSelect = document.getElementById("mood");
+    const audio = document.getElementById("moodMusic");
+
+    const moodSongs = {
+      sad: 'music/sad.mp3',
+      angry: 'music/angry.mp3',
+      happy: 'music/happy.mp3',
+      excited: 'music/excited.mp3',
+      horny: 'music/horny.mp3'
+    };
+
+    moodSelect.addEventListener('change', () => {
+      const mood = moodSelect.value;
+      if (moodSongs[mood]) {
+        audio.src = moodSongs[mood];
+        audio.play().catch(() => {});
+      }
+    });
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-        .then(response => {
-          msg.innerHTML = "🎉 Grievance submitted!";
-          form.reset();
-        })
-        .catch(error => {
-          msg.innerHTML = "❌ There was an error!";
-        });
+      const data = {
+        name: form.name.value,
+        grievance: form.grievance.value,
+        mood: form.mood.value
+      };
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(response => {
+        msg.innerHTML = "🎉 Grievance submitted!";
+        form.reset();
+        audio.pause();
+      })
+      .catch(error => {
+        msg.innerHTML = "❌ There was an error!";
+      });
     });
   </script>
 </body>
 </html>
-
