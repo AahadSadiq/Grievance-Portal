@@ -27,8 +27,8 @@
       border-radius: 20px;
       box-shadow: 4px 4px 0 #000;
       width: 300px;
-      z-index: 2;
       position: relative;
+      z-index: 2;
     }
 
     input, textarea, select, button {
@@ -52,22 +52,26 @@
       background-color: #ff1493;
     }
 
+    #msg {
+      margin-top: 1rem;
+      font-size: 12px;
+    }
+
     .floating-img {
       position: absolute;
-      width: 50px;
-      height: 50px;
+      width: 80px;
+      height: 80px;
       animation: float 20s linear infinite;
-      opacity: 0.6;
+      z-index: 0;
+      opacity: 0.4;
     }
 
     @keyframes float {
       0% {
-        top: 100%;
-        left: calc(100% * var(--i));
+        transform: translateY(100vh) translateX(0);
       }
       100% {
-        top: -60px;
-        left: calc(100% * var(--i));
+        transform: translateY(-120vh) translateX(50vw);
       }
     }
   </style>
@@ -78,58 +82,68 @@
   <form id="grievance-form">
     <input type="text" name="name" placeholder="Your Name" required />
     <textarea name="grievance" placeholder="Type your grievance here..." rows="5" required></textarea>
-    <select name="mood" id="mood-select" required>
-      <option value="">How are you feeling?</option>
-      <option value="sad">Sad</option>
-      <option value="angry">Angry</option>
-      <option value="happy">Happy</option>
-      <option value="excited">Excited</option>
-      <option value="horny">Horny</option>
+    <select name="mood" id="mood" required>
+      <option value="">How are you feeling today?</option>
+      <option value="sad">😢 Sad</option>
+      <option value="angry">😠 Angry</option>
+      <option value="happy">😊 Happy</option>
+      <option value="excited">🤩 Excited</option>
+      <option value="horny">🔥 Horny</option>
     </select>
     <button type="submit">Submit</button>
   </form>
   <p id="msg"></p>
 
-  <audio id="mood-music" autoplay></audio>
-
   <!-- Floating images -->
-  <img src="you1.png" class="floating-img" style="--i: 0.1;" />
-  <img src="you2.png" class="floating-img" style="--i: 0.3;" />
-  <img src="you3.png" class="floating-img" style="--i: 0.5;" />
-  <img src="you1.png" class="floating-img" style="--i: 0.7;" />
-  <img src="you2.png" class="floating-img" style="--i: 0.9;" />
+  <img src="you1.png" class="floating-img" style="left: 10vw; animation-delay: 0s;">
+  <img src="you2.png" class="floating-img" style="left: 40vw; animation-delay: 4s;">
+  <img src="you3.png" class="floating-img" style="left: 70vw; animation-delay: 8s;">
+
+  <!-- Mood Music -->
+  <audio id="moodMusic" autoplay loop></audio>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzKOsh7p3pFc5HWiHhZD60ciKHTJCyyPwkdipnP356KKaxa-xZqGpZSWv4Uk6shWq6ebw/exec'; // <-- Replace this
-    const form = document.getElementById('grievance-form');
-    const msg = document.getElementById("msg");
-    const moodMusic = document.getElementById("mood-music");
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzKOsh7p3pFc5HWiHhZD60ciKHTJCyyPwkdipnP356KKaxa-xZqGpZSWv4Uk6shWq6ebw/exec';
 
-    document.getElementById("mood-select").addEventListener("change", function () {
-      const mood = this.value;
-      if (mood) {
-        moodMusic.src = `${mood}.mp3`;
-        moodMusic.play().catch(() => {});
+
+    const form = document.forms['grievance-form'];
+    const msg = document.getElementById("msg");
+    const moodSelect = document.getElementById("mood");
+    const audio = document.getElementById("moodMusic");
+
+    const moodSongs = {
+      sad: 'sad.mp3',
+      angry: 'angry.mp3',
+      happy: 'happy.mp3',
+      excited: 'excited.mp3',
+      horny: 'horny.mp3'
+    };
+
+    moodSelect.addEventListener('change', () => {
+      const mood = moodSelect.value;
+      if (moodSongs[mood]) {
+        audio.src = moodSongs[mood];
+        audio.play().catch(() => {});
       }
     });
 
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const formData = new FormData(form);
-      const json = {};
-      formData.forEach((value, key) => json[key] = value);
+      const data = {
+        name: form.name.value,
+        grievance: form.grievance.value,
+        mood: form.mood.value
+      };
 
       fetch(scriptURL, {
         method: 'POST',
-        body: JSON.stringify(json),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
       })
       .then(response => {
         msg.innerHTML = "🎉 Grievance submitted!";
         form.reset();
-        moodMusic.pause();
+        audio.pause();
       })
       .catch(error => {
         msg.innerHTML = "❌ There was an error!";
